@@ -1,0 +1,5 @@
+# Documentazione interna e strategica (va su Drive, non su GitHub)
+docs/
+CLAUDE.md
+*.pdf
+prompt-immagini-koachify.html

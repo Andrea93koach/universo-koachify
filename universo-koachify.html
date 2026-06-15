@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Universo Koachify — Il Metodo</title>
+<style>
+
+/* ===== 1. RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: #0d1a14; color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== 2. PARALLAX BACKGROUND LAYERS ===== */
+/* Oversized so parallax movement stays within viewport */
+.bg-layer {
+  position: fixed;
+  top: -8%; left: -8%; right: -8%; bottom: -8%;
+  pointer-events: none;
+  will-change: transform;
+  z-index: 0;
+}
+#bg-sky  { background: url('images/universe-bg.jpg') center/cover no-repeat; z-index: 0; }
+#bg-far  { z-index: 1; opacity: 0.8; }
+#bg-mid  { z-index: 2; opacity: 0.6; }
+#bg-near { z-index: 3; opacity: 0.45; }
+
+/* Vignette always on top of bg layers */
+#bg-vignette {
+  position: fixed; inset: 0; z-index: 8;
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+/* ===== 3. NEBULAE ===== */
+.nebula {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 1;
+  animation: nebulaPulse 9s ease-in-out infinite;
+  transition: opacity 0.8s ease;
+}
+.nebula-a {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(90,181,82,0.32) 0%, transparent 70%);
+  top: -250px; right: -180px;
+}
+.nebula-b {
+  width: 520px; height: 520px;
+  background: radial-gradient(circle, rgba(39,96,31,0.28) 0%, transparent 70%);
+  bottom: -180px; left: -120px; animation-delay: -5s;
+}
+body.in-planet .nebula { opacity: 0; }
+
+/* ===== 4. CANVASES ===== */
+#starCanvas {
+  position: fixed; inset: 0; z-index: 2;
+  pointer-events: none;
+  transition: opacity 0.9s ease;
+}
+body.in-planet #starCanvas { opacity: 0; }
+
+#particleCanvas {
+  position: fixed; inset: 0; z-index: 7;
+  pointer-events: none;
+  opacity: 0; transition: opacity 0.8s ease;
+}
+body.in-planet #particleCanvas { opacity: 1; }
+
+/* ===== 5. PLANET ATMOSPHERE BACKGROUND ===== */
+#planet-atmo {
+  position: fixed;
+  top: -7%; left: -7%; right: -7%; bottom: -7%;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.3s ease;
+  will-change: transform, background-position;
+  background-position: 50% 50%;
+  background-size: cover;
+}
+#planet-atmo.show {
+  opacity: 1;
+  animation: kenBurns 30s ease-in-out infinite alternate;
+}
+/* Atmospheric shimmer light overlay */
+#planet-atmo::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 75% 55% at 68% 28%, rgba(255,255,255,0.055) 0%, transparent 58%);
+  animation: atmosphericLight 16s ease-in-out infinite alternate;
+}
+/* Text-readability scrim — garantisce contrasto su qualsiasi immagine */
+#planet-atmo::after {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to bottom,
+      rgba(0,0,0,0.62) 0%,
+      rgba(0,0,0,0.18) 28%,
+      rgba(0,0,0,0.12) 55%,
+      rgba(0,0,0,0.25) 70%,
+      rgba(0,0,0,0.78) 100%),
+    radial-gradient(ellipse 90% 70% at 50% 55%, rgba(0,0,0,0.3) 0%, transparent 100%);
+}
+
+/* 9 planet atmospheric backgrounds — real AI images with subtle vignette overlay */
+#planet-atmo.atmo-attrazione {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%),
+    url('images/planet-attrazione.jpg') center/cover no-repeat;
+}
+#planet-atmo.atmo-conversione {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%),
+    url('images/planet-conversione.jpg') center/cover no-repeat;
+}
+#planet-atmo.atmo-viaggio {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%),
+    url('images/planet-viaggio.jpg') center/cover no-repeat;
+}
+#planet-atmo.atmo-architettura {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%),
+    url('images/planet-architettura.jpg') center/cover no-repeat;
+}
+#planet-atmo.atmo-laboratorio {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%),
+    url('images/planet-laboratorio.jpg') center/cover no-repeat;
+}
+#planet-atmo.atmo-moltiplicazione {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%),
+    url('images/planet-moltiplicazione.jpg') center/cover no-repeat;
+}
+#planet-atmo.atmo-bussola {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.52) 100%),
+    url('images/planet-bussola.jpg') center/cover no-repeat;
+}
+#planet-atmo.atmo-villaggio {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.52) 100%),
+    url('images/planet-villaggio.jpg') center/cover no-repeat;
+}
+#planet-atmo.atmo-scuderia {
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.52) 100%),
+    url('images/planet-scuderia.jpg') center/cover no-repeat;
+}
+
+/* ===== 6. FIXED LOGO ===== */
+#logo-fixed {
+  position: fixed; top: 22px; left: 26px; z-index: 200;
+  display: flex; align-items: center; gap: 10px;
+  pointer-events: none; user-select: none;
+}
+.logo-img {
+  height: 42px; width: auto; flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(90,181,82,0.5));
+  animation: starGlow 3s ease-in-out infinite;
+}
+@media (max-width: 480px) {
+  #logo-fixed { top: 14px; left: 14px; }
+  .logo-img { height: 30px; }
+}
+
+/* ===== 7. BACK BUTTONS ===== */
+.back-btn {
+  position: fixed; top: 22px; right: 26px; z-index: 200;
+  display: none; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 8px; padding: 9px 18px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.65); cursor: pointer;
+  transition: all 0.22s ease; text-transform: uppercase;
+  font-family: inherit;
+}
+.back-btn:hover {
+  background: rgba(90,181,82,0.14);
+  border-color: rgba(90,181,82,0.35); color: #5ab552;
+}
+.back-btn.visible { display: flex; }
+
+/* ===== 8. SCREENS ===== */
+.screen {
+  position: fixed; inset: 0; z-index: 10;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+.screen.active { opacity: 1; pointer-events: all; }
+
+/* ===== 9. SCREEN 1 — UNIVERSE ===== */
+#screen-universe {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px 24px 60px;
+  overflow: hidden;
+}
+
+.universe-header {
+  text-align: center; position: relative; z-index: 2;
+  margin-bottom: clamp(22px, 4vh, 44px);
+}
+.universe-eyebrow {
+  font-size: clamp(10px, 1.4vw, 12px); font-weight: 600;
+  letter-spacing: 0.32em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35); margin-bottom: 14px;
+}
+.universe-title {
+  font-size: clamp(38px, 8.5vw, 94px); font-weight: 900;
+  line-height: 0.92; letter-spacing: 0.015em; text-transform: uppercase;
+  background: linear-gradient(140deg, #ffffff 0%, #c8f5c4 42%, #5ab552 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 16px;
+}
+.universe-subtitle {
+  font-size: clamp(12px, 1.8vw, 16px); color: rgba(255,255,255,0.42);
+  font-weight: 400; max-width: 500px; margin: 0 auto 10px; line-height: 1.55;
+}
+.universe-tagline {
+  font-size: clamp(10px, 1.4vw, 12px); color: #5ab552;
+  font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase;
+}
+
+/* Systems row */
+.systems-row {
+  display: flex; justify-content: center; align-items: flex-end;
+  gap: clamp(20px, 5vw, 76px);
+  flex-wrap: wrap;
+  position: relative; z-index: 2;
+  padding: 0 16px;
+}
+
+/* System orb wrapper */
+.sys-orb-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer;
+  transition: transform 0.42s cubic-bezier(.34,1.56,.64,1);
+}
+.sys-orb-wrap:hover { transform: translateY(-18px) scale(1.06); }
+.sys-orb-wrap:active { transform: translateY(-8px) scale(0.97); }
+.sys-orb-wrap:hover .sys-cta { opacity: 1; transform: translateY(0); }
+
+/* Floater with orbit rings */
+.orb-floater {
+  position: relative;
+  width: clamp(128px, 18vw, 208px); height: clamp(128px, 18vw, 208px);
+  animation: floatY 4.8s ease-in-out infinite;
+}
+.orb-floater::before {
+  content: ''; position: absolute; inset: -20px; border-radius: 50%;
+  border: 1.5px dashed rgba(255,255,255,0.14);
+  animation: orbitSpin 15s linear infinite;
+}
+.orb-floater::after {
+  content: ''; position: absolute; inset: -34px; border-radius: 50%;
+  border: 1px dashed rgba(255,255,255,0.06);
+  animation: orbitSpin 22s linear infinite reverse;
+}
+.sys-orb-wrap:nth-child(2) .orb-floater { animation-delay: -1.6s; }
+.sys-orb-wrap:nth-child(3) .orb-floater { animation-delay: -3.2s; }
+
+/* Orb sphere */
+.orb {
+  width: 100%; height: 100%; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 5px; position: relative; overflow: hidden;
+  transition: box-shadow 0.35s ease;
+}
+.orb::before { /* specular highlight */
+  content: ''; position: absolute;
+  top: 11%; left: 17%; width: 34%; height: 26%;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18); filter: blur(5px);
+  pointer-events: none;
+}
+.orb-icon   { font-size: clamp(22px, 3.2vw, 36px); position: relative; z-index: 1; }
+.orb-name   {
+  font-size: clamp(9px, 1.3vw, 12px); font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-align: center; line-height: 1.2; padding: 0 8px; position: relative; z-index: 1;
+}
+.orb-result {
+  font-size: clamp(8px, 1.1vw, 10px); font-weight: 600;
+  letter-spacing: 0.08em; opacity: 0.68; text-transform: uppercase;
+  position: relative; z-index: 1;
+}
+/* Orb color variants */
+.orb-p {
+  background: radial-gradient(circle at 34% 30%, #fff8c8 0%, #f5c842 26%, #c49010 62%, #7a5800 100%);
+  box-shadow: 0 0 52px rgba(245,200,66,0.38), 0 0 100px rgba(245,200,66,0.12), inset 0 0 28px rgba(255,245,150,0.08);
+}
+.sys-orb-wrap:hover .orb-p {
+  box-shadow: 0 0 80px rgba(245,200,66,0.65), 0 0 150px rgba(245,200,66,0.25), inset 0 0 40px rgba(255,245,150,0.12);
+}
+.orb-l {
+  background: radial-gradient(circle at 34% 30%, #d0eaff 0%, #4a9eed 26%, #1a6ebf 62%, #0a3d70 100%);
+  box-shadow: 0 0 52px rgba(74,158,237,0.38), 0 0 100px rgba(74,158,237,0.12), inset 0 0 28px rgba(180,220,255,0.08);
+}
+.sys-orb-wrap:hover .orb-l {
+  box-shadow: 0 0 80px rgba(74,158,237,0.65), 0 0 150px rgba(74,158,237,0.25), inset 0 0 40px rgba(180,220,255,0.12);
+}
+.orb-s {
+  background: radial-gradient(circle at 34% 30%, #c8f5c0 0%, #5ab552 26%, #27601f 62%, #0f2e0c 100%);
+  box-shadow: 0 0 52px rgba(90,181,82,0.38), 0 0 100px rgba(90,181,82,0.12), inset 0 0 28px rgba(180,255,170,0.08);
+}
+.sys-orb-wrap:hover .orb-s {
+  box-shadow: 0 0 80px rgba(90,181,82,0.65), 0 0 150px rgba(90,181,82,0.25), inset 0 0 40px rgba(180,255,170,0.12);
+}
+
+/* Orb label */
+.orb-label { text-align: center; margin-top: 20px; }
+.orb-label-name { font-size: clamp(11px, 1.6vw, 15px); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.orb-label-pain { font-size: clamp(9px, 1.2vw, 11px); color: rgba(255,255,255,0.38); font-weight: 400; }
+.sys-cta {
+  margin-top: 10px; font-size: clamp(10px, 1.3vw, 12px); color: #5ab552;
+  font-weight: 700; letter-spacing: 0.1em;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Orb zoom-in transition (cinematic enter) */
+@keyframes orbBlast {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(22);  opacity: 0; }
+}
+.orb-blasting { animation: orbBlast 0.6s cubic-bezier(.4,0,.2,1) forwards !important; }
+
+/* Scroll hint */
+.scroll-hint {
+  position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  opacity: 0.32; z-index: 2;
+  animation: hintBounce 2.6s ease-in-out infinite;
+}
+.scroll-hint span { font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(255,255,255,0.55); font-weight: 600; }
+.hint-chevron { width: 16px; height: 16px; border-right: 2px solid rgba(255,255,255,0.45); border-bottom: 2px solid rgba(255,255,255,0.45); transform: rotate(45deg); }
+
+/* ===== 10. SCREEN 2 — SYSTEM ===== */
+#screen-system {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px 24px 40px; overflow: hidden;
+}
+
+.sys-meta { text-align: center; margin-bottom: clamp(18px, 3.5vh, 40px); }
+.sys-badge {
+  display: inline-flex; align-items: center;
+  padding: 5px 18px; border-radius: 100px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
+  border: 1px solid; margin-bottom: 12px;
+}
+.sys-name {
+  font-size: clamp(26px, 6vw, 64px); font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.04em; line-height: 1; margin-bottom: 8px;
+}
+.sys-pain { font-size: clamp(11px, 1.6vw, 15px); color: rgba(255,255,255,0.38); font-weight: 400; }
+
+/* Planets stage */
+.planets-stage {
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(16px, 3.5vw, 56px); flex-wrap: wrap;
+  padding: 0 20px;
+}
+
+.planet-node {
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+.planet-node:hover { transform: translateY(-16px) scale(1.09); }
+.planet-node:active { transform: scale(0.95); }
+.planet-node:hover .pn-cta { opacity: 1; transform: translateY(0); }
+
+.planet-sphere-wrap {
+  position: relative;
+  width: clamp(96px, 13vw, 150px); height: clamp(96px, 13vw, 150px);
+  animation: floatY 5.2s ease-in-out infinite;
+}
+.planet-node:nth-child(2) .planet-sphere-wrap { animation-delay: -1.8s; }
+.planet-node:nth-child(3) .planet-sphere-wrap { animation-delay: -3.5s; }
+
+.planet-sphere {
+  width: 100%; height: 100%; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(22px, 3.2vw, 36px);
+  transition: box-shadow 0.3s ease;
+  position: relative; overflow: hidden;
+}
+.planet-sphere::before { /* specular */
+  content: ''; position: absolute; top: 10%; left: 16%; width: 30%; height: 24%;
+  border-radius: 50%; background: rgba(255,255,255,0.18); filter: blur(3px);
+}
+.planet-num {
+  position: absolute; top: -6px; right: -6px;
+  width: 25px; height: 25px; border-radius: 50%;
+  background: rgba(13,26,20,0.92);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800; border: 1.5px solid;
+}
+
+.pn-info { text-align: center; margin-top: 14px; }
+.pn-name { font-size: clamp(11px, 1.7vw, 16px); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+.pn-pain { font-size: clamp(9px, 1.2vw, 11px); color: rgba(255,255,255,0.35); margin-bottom: 2px; font-style: italic; }
+.pn-desire { font-size: clamp(9px, 1.2vw, 12px); color: rgba(255,255,255,0.58); font-weight: 500; line-height: 1.4; max-width: 150px; }
+.pn-cta { margin-top: 10px; font-size: 11px; color: #5ab552; font-weight: 700; letter-spacing: 0.1em; opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease, transform 0.3s ease; }
+
+/* ===== 11. SCREEN 3 — PLANET WALK ===== */
+#screen-planet {
+  overflow-y: scroll; overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#screen-planet::-webkit-scrollbar { display: none; }
+
+/* Snap sections */
+.snap-sec {
+  height: 100vh; min-height: 100vh; width: 100%;
+  scroll-snap-align: start; scroll-snap-stop: always;
+  position: relative; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* — Arrival — */
+.sec-arrival { flex-direction: column; text-align: center; padding: 80px 24px 40px; }
+
+.arr-tag {
+  display: inline-block; padding: 6px 20px; border-radius: 100px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
+  border: 1px solid; margin-bottom: 22px;
+  text-shadow: 0 1px 12px rgba(0,0,0,0.9);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  animation: fadeUp 0.9s ease both;
+}
+.arr-name {
+  font-size: clamp(48px, 12vw, 130px); font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.02em; line-height: 0.86;
+  margin-bottom: 24px;
+  animation: fadeUp 1s 0.1s ease both, arrivalPulse 4s 1.2s ease-in-out infinite;
+}
+.arr-desire {
+  font-size: clamp(15px, 2.3vw, 23px); color: rgba(255,255,255,0.82);
+  font-weight: 400; max-width: 600px; line-height: 1.5; margin: 0 auto;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.85);
+  animation: fadeUp 0.9s 0.22s ease both;
+}
+.arr-cue {
+  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  opacity: 0.45; animation: hintBounce 2.4s 1.2s ease-in-out infinite;
+}
+.arr-cue span { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 600; }
+.cue-chevron { width: 18px; height: 18px; border-right: 2px solid rgba(255,255,255,0.45); border-bottom: 2px solid rgba(255,255,255,0.45); transform: rotate(45deg); display: block; }
+
+/* — Pillar — */
+.sec-pillar {
+  padding: 20px;
+}
+.sec-pillar::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, transparent 28%, transparent 72%, rgba(0,0,0,0.28) 100%);
+}
+
+/* Walk-toward panel */
+.pillar-panel {
+  position: relative; z-index: 2;
+  width: min(720px, 94vw);
+  background: linear-gradient(155deg, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.38) 100%);
+  border-radius: 24px;
+  padding: clamp(28px, 4.5vw, 56px);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 28px 90px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+  opacity: 0; transform: translateY(65px) scale(0.94);
+  transition: opacity 1.1s cubic-bezier(.16,1,.3,1), transform 1.1s cubic-bezier(.16,1,.3,1), border-color 0.35s ease;
+}
+.sec-pillar.in-view .pillar-panel { opacity: 1; transform: translateY(0) scale(1); }
+.pillar-panel:hover { border-color: rgba(90,181,82,0.3); border-top-color: rgba(90,181,82,0.45); }
+
+.pillar-bg-num {
+  font-size: clamp(70px, 12vw, 130px); font-weight: 900; line-height: 0.85;
+  opacity: 0.055; letter-spacing: -0.02em;
+  position: absolute; top: 12px; right: 22px; user-select: none; pointer-events: none;
+}
+.pillar-title {
+  font-size: clamp(21px, 3.6vw, 40px); font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.05;
+  margin-bottom: 28px; position: relative; z-index: 1;
+  text-shadow: 0 0 32px currentColor, 0 2px 18px rgba(0,0,0,0.9);
+}
+.pillar-bullets { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+.pillar-bullets li {
+  display: flex; gap: 14px; align-items: flex-start;
+  opacity: 0; transform: translateX(-28px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.pillar-bullets li.bullet-revealed { opacity: 1; transform: translateX(0); }
+
+.bullet-num {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; margin-top: 1px;
+}
+.bullet-text { font-size: clamp(14px, 1.9vw, 17px); color: rgba(255,255,255,0.88); line-height: 1.6; text-shadow: 0 1px 10px rgba(0,0,0,0.75); }
+
+/* — Exit section — */
+.sec-exit {
+  flex-direction: column; gap: 20px; text-align: center;
+  padding: 40px 24px;
+}
+.exit-label {
+  font-size: clamp(13px, 2vw, 17px); font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+  text-shadow: 0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7);
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.exit-cta-btn {
+  opacity: 0; transform: translateY(20px);
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.32);
+  border-radius: 12px; padding: 16px 38px;
+  font-size: 14px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255,255,255,0.92); cursor: pointer; font-family: inherit;
+  text-shadow: 0 1px 12px rgba(0,0,0,0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s, background 0.22s ease, border-color 0.22s ease, color 0.22s ease;
+}
+.sec-exit.in-view .exit-label { opacity: 1; transform: translateY(0); }
+.sec-exit.in-view .exit-cta-btn { opacity: 1; transform: translateY(0); }
+.exit-cta-btn:hover { background: rgba(90,181,82,0.22); border-color: rgba(90,181,82,0.55); color: #7cd975; }
+
+/* ===== UNIVERSE OFFER BUTTON ===== */
+.universe-offer-btn {
+  margin-top: clamp(14px, 2.5vh, 26px);
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(90,181,82,0.08); border: 1px solid rgba(90,181,82,0.28);
+  border-radius: 100px; padding: 8px 24px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #5ab552; cursor: pointer; font-family: inherit;
+  transition: background 0.22s, border-color 0.22s;
+  animation: fadeUp 0.9s 0.4s ease both;
+}
+.universe-offer-btn:hover { background: rgba(90,181,82,0.18); border-color: rgba(90,181,82,0.5); }
+
+/* ===== SCREEN CHAPTER (system intro card) ===== */
+#screen-chapter {
+  display: flex; align-items: center; justify-content: center; padding: 40px 24px;
+}
+.chapter-inner {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; position: relative; z-index: 2;
+}
+.chapter-icon {
+  font-size: clamp(52px, 10vw, 96px); line-height: 1; margin-bottom: 18px;
+  animation: fadeUp 0.7s ease both;
+}
+.chapter-result-badge {
+  display: inline-flex; align-items: center; padding: 6px 22px; border-radius: 100px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+  border: 1px solid; margin-bottom: 18px; animation: fadeUp 0.7s 0.08s ease both;
+}
+.chapter-name {
+  font-size: clamp(44px, 11vw, 116px); font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.02em; line-height: 0.88;
+  margin-bottom: 18px; animation: fadeUp 0.8s 0.14s ease both;
+}
+.chapter-pain-text {
+  font-size: clamp(13px, 1.9vw, 18px); color: rgba(255,255,255,0.5);
+  max-width: 500px; line-height: 1.55; margin-bottom: 38px;
+  animation: fadeUp 0.7s 0.2s ease both;
+}
+.chapter-continue-btn {
+  animation: fadeUp 0.7s 0.3s ease both;
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 12px; padding: 14px 36px;
+  font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255,255,255,0.88); cursor: pointer; font-family: inherit;
+  transition: background 0.22s, border-color 0.22s;
+}
+.chapter-continue-btn:hover { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.42); }
+.chapter-hint {
+  margin-top: 18px; font-size: 10px; color: rgba(255,255,255,0.22);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  animation: fadeUp 0.7s 0.45s ease both;
+}
+
+/* ===== SCREEN OFFER ===== */
+#screen-offer {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 80px 24px 60px; overflow-y: auto; overflow-x: hidden;
+}
+.offer-header { text-align: center; margin-bottom: clamp(22px, 4vh, 40px); }
+.offer-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase;
+  color: #5ab552; margin-bottom: 12px;
+}
+.offer-title {
+  font-size: clamp(26px, 5.5vw, 58px); font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.03em; line-height: 0.92;
+  color: #fff; margin-bottom: 10px;
+}
+.offer-subtitle { font-size: clamp(11px, 1.5vw, 14px); color: rgba(255,255,255,0.35); }
+.offer-plans {
+  display: flex; gap: clamp(12px, 2.5vw, 22px); flex-wrap: wrap;
+  justify-content: center; width: 100%; max-width: 980px;
+}
+.offer-plan {
+  flex: 1; min-width: 210px; max-width: 285px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%);
+  border-radius: 20px; padding: clamp(18px, 2.8vw, 30px);
+  border: 1px solid rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  text-align: center; transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.offer-plan:hover { transform: translateY(-6px); box-shadow: 0 28px 70px rgba(0,0,0,0.45); }
+.offer-plan-badge {
+  display: inline-block; padding: 4px 14px; border-radius: 100px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+  border: 1px solid; margin-bottom: 12px;
+}
+.offer-plan-name {
+  font-size: clamp(20px, 3vw, 32px); font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
+}
+.offer-plan-system {
+  font-size: 10px; color: rgba(255,255,255,0.32); letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: 16px; line-height: 1.45;
+}
+.offer-plan-price {
+  font-size: clamp(30px, 5vw, 50px); font-weight: 900; line-height: 1; margin-bottom: 2px;
+}
+.offer-plan-freq { font-size: 11px; color: rgba(255,255,255,0.32); margin-bottom: 18px; }
+.offer-plan-features {
+  list-style: none; display: flex; flex-direction: column; gap: 8px;
+  text-align: left; margin-bottom: 20px;
+}
+.offer-plan-features li {
+  display: flex; gap: 9px; align-items: flex-start;
+  font-size: clamp(11px, 1.2vw, 12px); color: rgba(255,255,255,0.65); line-height: 1.45;
+}
+.offer-plan-features li::before { content: '✓'; font-weight: 900; flex-shrink: 0; margin-top: 1px; }
+.offer-plan-cta {
+  width: 100%; padding: 11px 16px; border-radius: 10px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  border: 1px solid; cursor: pointer; font-family: inherit; transition: opacity 0.22s;
+}
+.offer-plan-cta:hover { opacity: 0.72; }
+.offer-back {
+  margin-top: 26px; font-size: 11px; color: rgba(255,255,255,0.3);
+  cursor: pointer; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+  background: none; border: none; font-family: inherit; transition: color 0.2s;
+}
+.offer-back:hover { color: rgba(255,255,255,0.65); }
+
+/* ===== 12. ANIMATIONS ===== */
+@keyframes floatY   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
+@keyframes orbitSpin { to{transform:rotate(360deg)} }
+@keyframes starGlow  { 0%,100%{filter:drop-shadow(0 0 10px rgba(90,181,82,0.6))} 50%{filter:drop-shadow(0 0 22px rgba(90,181,82,1))} }
+@keyframes nebulaPulse { 0%,100%{opacity:0.05;transform:scale(1)} 50%{opacity:0.1;transform:scale(1.07)} }
+@keyframes hintBounce  { 0%,100%{transform:translateX(-50%) translateY(0);opacity:.3} 50%{transform:translateX(-50%) translateY(7px);opacity:.5} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
+@keyframes kenBurns {
+  0%   { transform: scale(1.07) translate( 0.3%,  0.3%); }
+  25%  { transform: scale(1.02) translate(-1.2%, -0.7%); }
+  50%  { transform: scale(1.05) translate( 0.8%,  0.5%); }
+  75%  { transform: scale(1.01) translate(-0.6%,  0.9%); }
+  100% { transform: scale(1.06) translate( 0.4%, -0.6%); }
+}
+@keyframes atmosphericLight {
+  0%   { opacity: 0.55; transform: translate(0%, 0%); }
+  100% { opacity: 1;    transform: translate(5%, -3%); }
+}
+@keyframes arrivalPulse {
+  0%,100% { text-shadow: 0 0 60px currentColor, 0 0 120px currentColor, 0 4px 40px rgba(0,0,0,0.8); }
+  50%     { text-shadow: 0 0 90px currentColor, 0 0 180px currentColor, 0 4px 40px rgba(0,0,0,0.8); }
+}
+
+/* ===== 13. RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .systems-row { gap: 14px; }
+  .orb-floater { width: 116px; height: 116px; }
+  .pillar-panel { padding: 22px 18px; }
+  .arr-name { font-size: clamp(38px, 14vw, 60px); }
+}
+@media (max-width: 370px) {
+  .orb-floater { width: 98px; height: 98px; }
+}
+
+/* ===== 14. REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .orb-floater, .planet-sphere-wrap { animation: none !important; }
+  .pillar-panel, .pillar-bullets li { transition-duration: 0.15s !important; opacity: 1 !important; transform: none !important; }
+  .bg-layer { transform: none !important; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ===== PARALLAX BG LAYERS ===== -->
+<div class="bg-layer" id="bg-sky"></div>
+<div class="bg-layer" id="bg-far"></div>
+<div class="bg-layer" id="bg-mid"></div>
+<div class="bg-layer" id="bg-near"></div>
+<div id="bg-vignette"></div>
+
+<!-- NEBULAE -->
+<div class="nebula nebula-a"></div>
+<div class="nebula nebula-b"></div>
+
+<!-- STAR CANVAS -->
+<canvas id="starCanvas"></canvas>
+
+<!-- PLANET ATMOSPHERE (shown only on planet screen) -->
+<div id="planet-atmo"></div>
+
+<!-- PLANET PARTICLES CANVAS -->
+<canvas id="particleCanvas"></canvas>
+
+<!-- FIXED LOGO -->
+<div id="logo-fixed">
+  <img class="logo-img" src="data:image/webp;base64,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" alt="Koachify Suite">
+</div>
+
+<!-- BACK BUTTONS -->
+<button class="back-btn" id="btn-back-sys"   onclick="navBack('universe')">← Universo</button>
+<button class="back-btn" id="btn-back-planet" onclick="navBack('system')">← Sistema</button>
+
+<!-- ===== SCREEN 1: UNIVERSE ===== -->
+<div id="screen-universe" class="screen active">
+  <div class="universe-header">
+    <p class="universe-eyebrow">Il Metodo Completo</p>
+    <h1 class="universe-title">Universo<br>Koachify</h1>
+    <p class="universe-subtitle">Il Sistema Completo per Coach, Formatori e Consulenti</p>
+    <p class="universe-tagline">Semplifika · Kresci · Amplifika</p>
+    <button class="universe-offer-btn" onclick="enterOffer()">Scopri i Piani →</button>
+  </div>
+
+  <div class="systems-row">
+    <div class="sys-orb-wrap" data-sid="prosperita" onclick="enterSystem('prosperita')">
+      <div class="orb-floater">
+        <div class="orb orb-p">
+          <span class="orb-icon">✦</span>
+          <span class="orb-name">Sistema<br>Prosperità</span>
+          <span class="orb-result">Più Soldi</span>
+        </div>
+      </div>
+      <div class="orb-label">
+        <div class="orb-label-name" style="color:#f5c842">Prosperità</div>
+        <div class="orb-label-pain">Risolve: pochi lead e clienti</div>
+      </div>
+      <div class="sys-cta">Esplora →</div>
+    </div>
+
+    <div class="sys-orb-wrap" data-sid="liberta" onclick="enterSystem('liberta')">
+      <div class="orb-floater">
+        <div class="orb orb-l">
+          <span class="orb-icon">◈</span>
+          <span class="orb-name">Sistema<br>Libertà</span>
+          <span class="orb-result">Più Tempo</span>
+        </div>
+      </div>
+      <div class="orb-label">
+        <div class="orb-label-name" style="color:#4a9eed">Libertà</div>
+        <div class="orb-label-pain">Risolve: caos operativo</div>
+      </div>
+      <div class="sys-cta">Esplora →</div>
+    </div>
+
+    <div class="sys-orb-wrap" data-sid="serenita" onclick="enterSystem('serenita')">
+      <div class="orb-floater">
+        <div class="orb orb-s">
+          <span class="orb-icon">❋</span>
+          <span class="orb-name">Sistema<br>Serenità</span>
+          <span class="orb-result">Meno Stress</span>
+        </div>
+      </div>
+      <div class="orb-label">
+        <div class="orb-label-name" style="color:#5ab552">Serenità</div>
+        <div class="orb-label-pain">Risolve: gestione solitaria</div>
+      </div>
+      <div class="sys-cta">Esplora →</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scegli un sistema</span>
+    <div class="hint-chevron"></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2: SYSTEM ===== -->
+<div id="screen-system" class="screen">
+  <div class="sys-meta">
+    <div class="sys-badge" id="sys-badge"></div>
+    <h2 class="sys-name" id="sys-name"></h2>
+    <p class="sys-pain" id="sys-pain"></p>
+  </div>
+  <div class="planets-stage" id="planets-stage"></div>
+</div>
+
+<!-- ===== SCREEN 3: PLANET ===== -->
+<div id="screen-planet" class="screen"></div>
+
+<!-- ===== SCREEN 1.5: CHAPTER (system intro) ===== -->
+<div id="screen-chapter" class="screen">
+  <div class="chapter-inner">
+    <div class="chapter-icon" id="chapter-icon"></div>
+    <div class="chapter-result-badge" id="chapter-result-badge"></div>
+    <h2 class="chapter-name" id="chapter-name"></h2>
+    <p class="chapter-pain-text" id="chapter-pain-text"></p>
+    <button class="chapter-continue-btn" onclick="continueToSystem()">
+      Esplora i Pianeti &nbsp;→
+    </button>
+    <p class="chapter-hint">o premi SPAZIO</p>
+  </div>
+</div>
+
+<!-- ===== SCREEN 4: OFFER ===== -->
+<div id="screen-offer" class="screen">
+  <div class="offer-header">
+    <p class="offer-eyebrow">Accedi al Metodo Completo</p>
+    <h2 class="offer-title">Scegli il<br>tuo Percorso</h2>
+    <p class="offer-subtitle">Ogni piano include un sistema dell'Universo Koachify</p>
+  </div>
+  <div class="offer-plans">
+    <div class="offer-plan">
+      <div class="offer-plan-badge" style="color:#f5c842;border-color:#f5c84255;background:#f5c8421a;">Sistema Prosperità</div>
+      <div class="offer-plan-name" style="color:#f5c842;">SEMPLIFIKA</div>
+      <div class="offer-plan-system">Più Soldi · Attrazione · Conversione · Viaggio</div>
+      <div class="offer-plan-price" style="color:#f5c842;">€97</div>
+      <div class="offer-plan-freq">al mese</div>
+      <ul class="offer-plan-features">
+        <li>Piattaforma Koachify Suite completa</li>
+        <li>CRM, funnel builder, email marketing</li>
+        <li>Knowledge base e tutorial video h24</li>
+        <li>Community e forum di supporto</li>
+        <li>Corsi base Koachify Academy</li>
+      </ul>
+      <button class="offer-plan-cta" style="color:#f5c842;border-color:#f5c84255;background:#f5c8421a;">Inizia con SEMPLIFIKA</button>
+    </div>
+    <div class="offer-plan" style="border-color:rgba(74,158,237,0.22);border-top-color:rgba(74,158,237,0.45);">
+      <div class="offer-plan-badge" style="color:#4a9eed;border-color:#4a9eed55;background:#4a9eed1a;">Sistema Libertà</div>
+      <div class="offer-plan-name" style="color:#4a9eed;">KRESCI</div>
+      <div class="offer-plan-system">Più Tempo · Architettura · Laboratorio · Moltiplicazione</div>
+      <div class="offer-plan-price" style="color:#4a9eed;">€157</div>
+      <div class="offer-plan-freq">al mese</div>
+      <ul class="offer-plan-features">
+        <li>Tutto di SEMPLIFIKA incluso</li>
+        <li>Sessioni live settimanali col team</li>
+        <li>Corsi avanzati Koachify Academy</li>
+        <li>Forum e networking avanzato</li>
+        <li>Supporto prioritario via canale dedicato</li>
+      </ul>
+      <button class="offer-plan-cta" style="color:#4a9eed;border-color:#4a9eed55;background:#4a9eed1a;">Inizia con KRESCI</button>
+    </div>
+    <div class="offer-plan" style="border-color:rgba(90,181,82,0.22);border-top-color:rgba(90,181,82,0.45);">
+      <div class="offer-plan-badge" style="color:#5ab552;border-color:#5ab55255;background:#5ab5521a;">Sistema Serenità</div>
+      <div class="offer-plan-name" style="color:#5ab552;">AMPLIFIKA</div>
+      <div class="offer-plan-system">Meno Stress · Bussola · Villaggio · Scuderia</div>
+      <div class="offer-plan-price" style="color:#5ab552;">€247</div>
+      <div class="offer-plan-freq">al mese</div>
+      <ul class="offer-plan-features">
+        <li>Tutto di KRESCI incluso</li>
+        <li>Tutor personale dedicato (DWY + DFY)</li>
+        <li>Sessioni 1:1 di strategia mensili</li>
+        <li>Assistenza prioritaria assoluta</li>
+        <li>Servizi aggiuntivi scontati</li>
+      </ul>
+      <button class="offer-plan-cta" style="color:#5ab552;border-color:#5ab55255;background:#5ab5521a;">Inizia con AMPLIFIKA</button>
+    </div>
+  </div>
+  <button class="offer-back" onclick="navBack('universe')">← Torna all'Universo</button>
+</div>
+
+<!-- =====================================================
+     JAVASCRIPT
+     ===================================================== -->
+<script>
+'use strict';
+
+/* -------------------------------------------------------
+   DATA — Universo Koachify v2 | 11.06.2026
+   Koachify Suite © 2026 — Andrea Suprano & Riccardo Sirone
+   ------------------------------------------------------- */
+const DATA = {
+  prosperita: {
+    name:'Sistema Prosperità', icon:'✦',
+    color:'#f5c842', colorDark:'#a07010',
+    result:'Più Soldi',
+    pain:'Risolve il problema: pochi lead e pochi clienti',
+    planets:[
+      { id:'attrazione', name:'Attrazione', n:1, icon:'⬡',
+        color:'#f5c842', colorDark:'#a07010', atmo:'atmo-attrazione',
+        pain:'Pochi clienti', desire:'Generare lead ogni giorno',
+        pillars:[
+          { title:'Creare il proprio pubblico', bullets:[
+            'Definire con precisione il target audience e i propri avatar',
+            'Costruire una presenza riconoscibile e coerente nel proprio mercato',
+            'Attrarre le persone giuste attraverso contenuti e posizionamento'
+          ]},
+          { title:'Diventare la guida del mercato', bullets:[
+            'Posizionarsi come autorità di riferimento nel proprio settore',
+            'Comunicare con chiarezza il proprio metodo e la propria visione',
+            'Costruire credibilità e fiducia nel tempo'
+          ]},
+          { title:'Generare domanda', bullets:[
+            'Creare interesse attivo e consapevole verso le proprie offerte',
+            'Attivare meccanismi di attrazione sia organici che a pagamento',
+            'Alimentare un flusso costante di potenziali clienti'
+          ]}
+        ]
+      },
+      { id:'conversione', name:'Conversione', n:2, icon:'⬢',
+        color:'#f09c38', colorDark:'#a06010', atmo:'atmo-conversione',
+        pain:'Poche vendite', desire:'Avere vendite ogni settimana',
+        pillars:[
+          { title:'Creare la giusta offerta', bullets:[
+            'Strutturare offerte chiare, irresistibili e coerenti con il proprio mercato',
+            'Definire prezzi, modalità e percezione del valore',
+            'Differenziare le offerte per i diversi stadi del cliente'
+          ]},
+          { title:'Avere flussi di vendita', bullets:[
+            'Costruire e presidiare percorsi di vendita strutturati',
+            'Avere sempre più canali attivi di conversione',
+            'Monitorare e ottimizzare i tassi di chiusura'
+          ]},
+          { title:'Ciclo promozionale', bullets:[
+            'Pianificare e rispettare un calendario promozionale costante',
+            'Alternare fasi di lancio, nurturing e riattivazione',
+            'Evitare il silenzio commerciale e mantenere il mercato caldo'
+          ]}
+        ]
+      },
+      { id:'viaggio', name:'Viaggio', n:3, icon:'⬟',
+        color:'#e07a20', colorDark:'#904e10', atmo:'atmo-viaggio',
+        pain:'Clienti che abbandonano, stress da erogazione',
+        desire:'Clienti fidelizzati nel lungo termine',
+        pillars:[
+          { title:'Percorso del cliente', bullets:[
+            'Definire e visualizzare il viaggio completo che il cliente farà nel tempo',
+            'Mostrare al cliente ogni fase del percorso con chiarezza',
+            'Strutturare il percorso per favorire rinnovi e acquisti continuativi'
+          ]},
+          { title:'Proprietà intellettuale', bullets:[
+            'Archiviare, definire e mantenere aggiornata la propria IP come coach o formatore',
+            'Documentare metodi, framework e contenuti esclusivi',
+            'Usare la proprietà intellettuale come leva di posizionamento e differenziazione'
+          ]},
+          { title:'Esperienza del cliente', bullets:[
+            'Curare la user experience in ogni touch point del customer journey',
+            "Progettare ogni interazione — dal primo contatto all'erogazione — con intenzione",
+            "Trasformare l'esperienza in un vantaggio competitivo e fonte di referenze"
+          ]}
+        ]
+      }
+    ]
+  },
+  liberta:{
+    name:'Sistema Libertà', icon:'◈',
+    color:'#4a9eed', colorDark:'#1a6ebf',
+    result:'Più Tempo',
+    pain:'Risolve il problema: caos operativo, mancanza di organizzazione',
+    planets:[
+      { id:'architettura', name:'Architettura', n:4, icon:'◇',
+        color:'#4a9eed', colorDark:'#1a6ebf', atmo:'atmo-architettura',
+        pain:'Nessun processo, nessun controllo',
+        desire:"Chiarezza totale sull'organizzazione del business",
+        pillars:[
+          { title:'Registri e documenti di business', bullets:[
+            "Archivio sempre aggiornato di tutti i documenti fondamentali dell'azienda",
+            'Brand positioning statement, target audience, avatar, obiezioni del mercato',
+            'Ogni documento viene revisionato e aggiornato periodicamente'
+          ]},
+          { title:'Processi e procedure di marketing', bullets:[
+            'Documenti chiari e consultabili che descrivono ogni processo di marketing',
+            'Dal piano editoriale alle sequenze email, dai funnel alle campagne',
+            'Permettono di delegare e replicare senza dover reinventare ogni volta'
+          ]},
+          { title:'Processi di gestione interna', bullets:[
+            'Documentazione di tutti i flussi organizzativi aziendali',
+            'Procedure operative standard per ogni area del business',
+            'Riduzione del carico mentale e aumento della coerenza operativa'
+          ]}
+        ]
+      },
+      { id:'laboratorio', name:'Laboratorio', n:5, icon:'◆',
+        color:'#2d85e0', colorDark:'#1060b0', atmo:'atmo-laboratorio',
+        pain:'Caos di strumenti o tutto fatto a mano',
+        desire:'Asset di strumenti funzionali e corretti',
+        pillars:[
+          { title:'CRM tools', bullets:[
+            'Gestione centralizzata di tutti i contatti e delle relazioni commerciali',
+            'Segmentazione, tagging, storico conversazioni e pipeline di vendita',
+            'La base operativa per non perdere nessun lead o cliente'
+          ]},
+          { title:'Marketing tools', bullets:[
+            'Strumenti per funnel, siti, automazioni email e WhatsApp, social planner',
+            "Tutto integrato in un'unica piattaforma per eliminare il tool-sprawl",
+            'Meno strumenti, più controllo, meno costi fissi'
+          ]},
+          { title:'Tools di analisi e KPI', bullets:[
+            'Strumenti per monitorare i numeri chiave del business in tempo reale',
+            'Dashboard e metriche per prendere decisioni basate sui dati',
+            'Scelti in base allo stadio di sviluppo del business del coach'
+          ]}
+        ]
+      },
+      { id:'moltiplicazione', name:'Moltiplicazione', n:6, icon:'◉',
+        color:'#1570cc', colorDark:'#0a4090', atmo:'atmo-moltiplicazione',
+        pain:'Non riesco a delegare, sono completamente solo',
+        desire:'Delega corretta e funzionale',
+        pillars:[
+          { title:'Team e collaboratori', bullets:[
+            'Trovare le persone giuste per il proprio business',
+            'Costruire un team coeso e funzionale anche partendo da zero',
+            'Definire ruoli, responsabilità e aspettative con chiarezza'
+          ]},
+          { title:'AI al proprio servizio', bullets:[
+            "Delegare all'intelligenza artificiale attività ripetitive e a basso valore",
+            'Integrare strumenti AI nel flusso di lavoro quotidiano',
+            'Aumentare la produttività senza aumentare il costo operativo'
+          ]},
+          { title:'Task management e mindset', bullets:[
+            'Sviluppare un sistema di gestione delle attività efficace e sostenibile',
+            'Coltivare il giusto mindset imprenditoriale per prioritizzare',
+            'Applicare questi principi sia al business che alla vita personale'
+          ]}
+        ]
+      }
+    ]
+  },
+  serenita:{
+    name:'Sistema Serenità', icon:'❋',
+    color:'#5ab552', colorDark:'#27601f',
+    result:'Meno Stress',
+    pain:'Risolve il problema: gestione stressante e solitaria del business',
+    planets:[
+      { id:'bussola', name:'Bussola', n:7, icon:'✧',
+        color:'#5ab552', colorDark:'#27601f', atmo:'atmo-bussola',
+        pain:'Autosabotaggio e incertezza su cosa fare',
+        desire:'Sicurezza piena e know-how stabile per operare',
+        pillars:[
+          { title:'Canali di assistenza chiari e h24', bullets:[
+            'Supporto sempre raggiungibile attraverso canali definiti e ben organizzati',
+            'Tempi di risposta chiari e priorità gestite in base al piano attivo',
+            "Nessun coach lasciato bloccato senza una via d'uscita"
+          ]},
+          { title:'Knowledge base e tutorial completi', bullets:[
+            'Libreria di contenuti formativi sempre aggiornata sul software e sulle strategie',
+            'Tutorial video, guide scritte e FAQ per ogni funzionalità e processo',
+            'Autoformazione possibile in qualsiasi momento, senza dover attendere supporto'
+          ]},
+          { title:'Percorsi e chiamate di onboarding', bullets:[
+            'Percorso strutturato per accompagnare ogni nuovo cliente dalla partenza alla prima autonomia',
+            'Chiamate di avviamento personalizzate per accelerare la curva di apprendimento',
+            'Riduzione dell\'ansia da «da dove comincio?» fin dal primo giorno'
+          ]}
+        ]
+      },
+      { id:'villaggio', name:'Villaggio', n:8, icon:'✦',
+        color:'#2ea866', colorDark:'#1a6040', atmo:'atmo-villaggio',
+        pain:'Mi sento solo e abbandonato nel mio percorso',
+        desire:'Avere sempre un network e un aiuto totale',
+        pillars:[
+          { title:'Accademia con corsi accessibili e completi', bullets:[
+            'Percorsi formativi strutturati su marketing, vendita, delivery e mindset',
+            "Contenuti sempre accessibili e aggiornati in base all'evoluzione del mercato",
+            'Formazione pratica e applicabile fin dalla prima sessione'
+          ]},
+          { title:'Community e forum di proprietà', bullets:[
+            'Spazio dedicato dove i coach si confrontano, condividono idee e si supportano',
+            'Forum strutturato per categoria di argomento',
+            'Moderazione attiva per garantire qualità e un ambiente positivo'
+          ]},
+          { title:'Community di supporto e networking', bullets:[
+            'Canale diretto e rapido per ricevere supporto e confrontarsi con il team',
+            'Assistenza prioritaria disponibile in base al piano attivo',
+            'Networking attivo tra i membri per creare sinergie e collaborazioni'
+          ]}
+        ]
+      },
+      { id:'scuderia', name:'Scuderia', n:9, icon:'★',
+        color:'#1e9850', colorDark:'#0f4a28', atmo:'atmo-scuderia',
+        pain:'Non riesco o ci impiego troppo tempo a implementare',
+        desire:'Ho chi mi aiuta ogni volta che ne ho bisogno',
+        pillars:[
+          { title:'Tutor personale dedicato', bullets:[
+            'Disponibile live per sessioni di affiancamento tecnico in videochiamata',
+            'Lavora in modalità Done With You (guidato) e Done For You (eseguito direttamente)',
+            'Mette a terra tecnicamente tutto ciò che è stato deciso strategicamente'
+          ]},
+          { title:'Done With You', bullets:[
+            'Sessioni guidate passo per passo insieme al tutor',
+            'Il tutor lavora con te in tempo reale — impari implementando',
+            'Zero attesa, zero blocchi tecnici'
+          ]},
+          { title:'Done For You', bullets:[
+            'Il team implementa direttamente al posto tuo',
+            'Disponibile nel piano Amplifika e come servizio aggiuntivo',
+            'Vai avanti anche quando non hai tempo di farlo tu'
+          ]}
+        ]
+      }
+    ]
+  }
+};
+
+/* -------------------------------------------------------
+   STATE
+   ------------------------------------------------------- */
+const S = { screen:'universe', sysId:null, planetId:null, busy:false, currentPillarSec:null, currentBulletRevealed:0 };
+
+/* -------------------------------------------------------
+   PARALLAX
+   ------------------------------------------------------- */
+const Parallax = (() => {
+  let tx=0, ty=0, cx=0, cy=0;
+  const defs = [
+    { id:'bg-sky',  fx:0.007, fy:0.005 },
+    { id:'bg-far',  fx:0.018, fy:0.013 },
+    { id:'bg-mid',  fx:0.042, fy:0.032 },
+    { id:'bg-near', fx:0.075, fy:0.058 },
+  ];
+  let els = {};
+
+  function init() {
+    defs.forEach(d => { els[d.id] = document.getElementById(d.id); });
+    window.addEventListener('mousemove', e => {
+      tx = (e.clientX / window.innerWidth  - 0.5) * 2;
+      ty = (e.clientY / window.innerHeight - 0.5) * 2;
+    }, { passive: true });
+    tick();
+  }
+
+  function tick() {
+    cx += (tx - cx) * 0.055;
+    cy += (ty - cy) * 0.055;
+    defs.forEach(d => {
+      const el = els[d.id];
+      if (el) el.style.transform = `translate(${cx*d.fx*100}px,${cy*d.fy*100}px)`;
+    });
+    /* Planet atmosphere parallax via background-position (doesn't conflict with Ken Burns transform) */
+    if (document.body.classList.contains('in-planet')) {
+      const atmo = document.getElementById('planet-atmo');
+      if (atmo) atmo.style.backgroundPositionX = `${50 + cx * 3.5}%`;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  return { init };
+})();
+
+/* -------------------------------------------------------
+   STAR CANVAS
+   ------------------------------------------------------- */
+const Stars = (() => {
+  let canvas, ctx, stars=[];
+
+  function init() {
+    canvas = document.getElementById('starCanvas');
+    ctx = canvas.getContext('2d');
+    resize(); window.addEventListener('resize', resize);
+    draw(0);
+  }
+
+  function resize() {
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const n = Math.floor(canvas.width * canvas.height / 4600);
+    stars = Array.from({length:n}, () => ({
+      x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+      r: Math.random()*1.3+0.2,
+      phase: Math.random()*Math.PI*2, speed: Math.random()*0.007+0.003,
+    }));
+  }
+
+  function draw(t) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stars.forEach(s => {
+      const a = 0.22 + 0.72*(0.5+0.5*Math.sin(t*s.speed+s.phase));
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${a*0.72})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  return { init };
+})();
+
+/* -------------------------------------------------------
+   PLANET PARTICLES
+   ------------------------------------------------------- */
+const Particles = (() => {
+  let canvas, ctx, pts=[], rafId=null, rgb={r:90,g:181,b:82}, sysId='serenita';
+
+  /* Sistema Prosperità (gold) — scintille che salgono e lampeggiano */
+  /* Sistema Libertà (blue) — dati digitali che derivano in orizzontale */
+  /* Sistema Serenità (green) — particelle organiche che cadono dolcemente */
+
+  function init(hex, sys) {
+    if (rafId) cancelAnimationFrame(rafId);
+    sysId = sys || 'serenita';
+    rgb = { r:parseInt(hex.slice(1,3),16), g:parseInt(hex.slice(3,5),16), b:parseInt(hex.slice(5,7),16) };
+    canvas = document.getElementById('particleCanvas');
+    ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const n = sysId==='prosperita' ? 70 : sysId==='liberta' ? 55 : 50;
+    pts = Array.from({length:n}, mkPt);
+    draw();
+  }
+
+  function mkPt() {
+    const falling = sysId === 'serenita';
+    const horizontal = sysId === 'liberta';
+    return {
+      x: Math.random() * window.innerWidth,
+      y: falling
+        ? (Math.random() * -window.innerHeight * 0.5)
+        : (window.innerHeight + Math.random() * 80),
+      r: sysId==='prosperita' ? Math.random()*2.5+0.6 : Math.random()*1.8+0.3,
+      sp: Math.random()*0.7+0.25,
+      drift: horizontal
+        ? (Math.random()*0.9+0.4) * (Math.random()<0.5 ? 1:-1)
+        : (Math.random()-0.5)*0.38,
+      a: Math.random()*0.7+0.2,
+      phase: Math.random()*Math.PI*2,
+      falling
+    };
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const t = performance.now() * 0.001;
+    pts.forEach(p => {
+      /* movement */
+      if (p.falling) {
+        p.y += p.sp * 0.7; p.x += p.drift * 0.5;
+        if (p.y > canvas.height+10) { p.y = -10; p.x = Math.random()*canvas.width; }
+      } else {
+        p.y -= p.sp; p.x += p.drift;
+        if (p.y < -10) { p.y = canvas.height+10; p.x = Math.random()*canvas.width; }
+      }
+      if (p.x < -10) p.x = canvas.width+10;
+      if (p.x > canvas.width+10) p.x = -10;
+
+      /* alpha — scintille prosperità lampeggiano, altri statici */
+      const alpha = sysId==='prosperita'
+        ? p.a * (0.35 + 0.65*(0.5+0.5*Math.sin(t*4+p.phase)))
+        : p.a * 0.52;
+
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`; ctx.fill();
+
+      /* scintilla aggiuntiva per prosperità — alone luminoso */
+      if (sysId==='prosperita' && p.r > 1.8) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r*2.5, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha*0.12})`; ctx.fill();
+      }
+    });
+    rafId = requestAnimationFrame(draw);
+  }
+
+  return { init };
+})();
+
+/* -------------------------------------------------------
+   NAVIGATION
+   ------------------------------------------------------- */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  if (id === 'screen-planet') el.scrollTop = 0;
+}
+
+function updateBtns() {
+  document.getElementById('btn-back-sys').classList.toggle('visible', S.screen==='system' || S.screen==='chapter');
+  document.getElementById('btn-back-planet').classList.toggle('visible', S.screen==='planet');
+}
+
+/* Enter system — cinematic zoom on orb → chapter card first */
+function enterSystem(sysId) {
+  if (S.busy) return;
+  S.busy = true;
+
+  const orbEl = document.querySelector(`[data-sid="${sysId}"] .orb`);
+  if (orbEl) orbEl.classList.add('orb-blasting');
+
+  setTimeout(() => {
+    S.screen = 'chapter'; S.sysId = sysId;
+    buildChapter(sysId);
+    showScreen('screen-chapter');
+    updateBtns();
+    if (orbEl) orbEl.classList.remove('orb-blasting');
+    S.busy = false;
+  }, 520);
+}
+
+function buildChapter(sysId) {
+  const sys = DATA[sysId];
+
+  const iconEl = document.getElementById('chapter-icon');
+  iconEl.textContent = sys.icon;
+  iconEl.style.color = sys.color;
+
+  const badge = document.getElementById('chapter-result-badge');
+  badge.textContent = sys.result;
+  badge.style.color = sys.color;
+  badge.style.borderColor = sys.color + '55';
+  badge.style.background   = sys.color + '1a';
+
+  const nameEl = document.getElementById('chapter-name');
+  nameEl.textContent = sys.name.toUpperCase();
+  nameEl.style.color = sys.color;
+
+  document.getElementById('chapter-pain-text').textContent = sys.pain;
+
+  /* Re-trigger CSS entrance animations on every visit */
+  document.querySelectorAll('.chapter-icon,.chapter-result-badge,.chapter-name,.chapter-pain-text,.chapter-continue-btn,.chapter-hint').forEach(el => {
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = '';
+  });
+}
+
+function continueToSystem() {
+  if (S.busy) return;
+  S.busy = true;
+  S.screen = 'system';
+  buildSystem(S.sysId);
+  showScreen('screen-system');
+  updateBtns();
+  setTimeout(() => { S.busy = false; }, 700);
+}
+
+function buildSystem(sysId) {
+  const sys = DATA[sysId];
+
+  const badge = document.getElementById('sys-badge');
+  badge.textContent = sys.result;
+  badge.style.color = sys.color;
+  badge.style.borderColor = sys.color+'55';
+  badge.style.background   = sys.color+'1a';
+
+  document.getElementById('sys-name').textContent = sys.name;
+  document.getElementById('sys-name').style.color = sys.color;
+  document.getElementById('sys-pain').textContent = sys.pain;
+
+  const stage = document.getElementById('planets-stage');
+  stage.innerHTML = '';
+
+  sys.planets.forEach(p => {
+    const node = document.createElement('div');
+    node.className = 'planet-node';
+    node.onclick = () => enterPlanet(sysId, p.id);
+
+    const c = p.color, cd = p.colorDark;
+    const cLight = lighten(c), cDark2 = darken(cd);
+
+    node.innerHTML = `
+      <div class="planet-sphere-wrap">
+        <div class="planet-sphere" style="
+          background:radial-gradient(circle at 34% 30%,${cLight} 0%,${c} 28%,${cd} 64%,${cDark2} 100%);
+          box-shadow:0 0 38px ${c}55,inset 0 0 18px rgba(255,255,255,0.07);">
+          <span style="position:relative;z-index:1;">${p.icon}</span>
+        </div>
+        <div class="planet-num" style="color:${c};border-color:${c};">${p.n}</div>
+      </div>
+      <div class="pn-info">
+        <div class="pn-name" style="color:${c}">${p.name}</div>
+        <div class="pn-pain">Pain: ${p.pain}</div>
+        <div class="pn-desire">${p.desire}</div>
+      </div>
+      <div class="pn-cta">Atterra →</div>
+    `;
+    stage.appendChild(node);
+  });
+}
+
+/* Enter planet */
+function enterPlanet(sysId, planetId) {
+  if (S.busy) return;
+  S.busy = true;
+
+  S.screen = 'planet'; S.sysId = sysId; S.planetId = planetId;
+
+  const sys    = DATA[sysId];
+  const planet = sys.planets.find(p => p.id === planetId);
+
+  /* Set atmosphere */
+  const atmo = document.getElementById('planet-atmo');
+  atmo.className = planet.atmo;
+  atmo.classList.add('show');
+
+  /* Build walk sections */
+  buildPlanetWalk(sys, planet);
+
+  document.body.classList.add('in-planet');
+  showScreen('screen-planet');
+  updateBtns();
+
+  Particles.init(planet.color, sysId);
+
+  setTimeout(() => { S.busy = false; }, 700);
+}
+
+function buildPlanetWalk(sys, planet) {
+  const screen = document.getElementById('screen-planet');
+  screen.innerHTML = '';
+
+  /* Section 0 — Arrival */
+  const arrSec = document.createElement('section');
+  arrSec.className = 'snap-sec sec-arrival';
+  arrSec.innerHTML = `
+    <div class="arr-tag" style="color:${planet.color};border-color:${planet.color}55;background:${planet.color}1a;">
+      ${sys.name} &nbsp;·&nbsp; ${sys.result}
+    </div>
+    <h2 class="arr-name" style="color:${planet.color};">${planet.name.toUpperCase()}</h2>
+    <p class="arr-desire">${planet.desire}</p>
+    <div class="arr-cue">
+      <span>Scorri per esplorare</span>
+      <span class="cue-chevron"></span>
+    </div>
+  `;
+  screen.appendChild(arrSec);
+
+  /* Sections 1–3 — Pillars */
+  planet.pillars.forEach((pillar, i) => {
+    const sec = document.createElement('section');
+    sec.className = 'snap-sec sec-pillar';
+
+    const bullets = pillar.bullets.map((b, bi) => `
+      <li>
+        <span class="bullet-num" style="background:${planet.color}22;color:${planet.color};">${bi+1}</span>
+        <span class="bullet-text">${b}</span>
+      </li>
+    `).join('');
+
+    sec.innerHTML = `
+      <div class="pillar-panel">
+        <div class="pillar-bg-num" style="color:${planet.color};">${String(i+1).padStart(2,'0')}</div>
+        <div class="pillar-title" style="color:${planet.color};">${pillar.title}</div>
+        <ul class="pillar-bullets">${bullets}</ul>
+      </div>
+    `;
+    screen.appendChild(sec);
+  });
+
+  /* Section 4 — Exit */
+  const exitSec = document.createElement('section');
+  exitSec.className = 'snap-sec sec-exit';
+  exitSec.innerHTML = `
+    <p class="exit-label">Hai esplorato il Pianeta ${planet.name}</p>
+    <button class="exit-cta-btn" onclick="navBack('system')">
+      ← Torna al ${sys.name}
+    </button>
+  `;
+  screen.appendChild(exitSec);
+
+  /* Reset bullet state for fresh planet */
+  S.currentPillarSec = null; S.currentBulletRevealed = 0;
+
+  /* IntersectionObserver — panel fade-in + track active pillar for bullet reveals */
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.intersectionRatio >= 0.5) {
+        e.target.classList.add('in-view');
+        if (e.target.classList.contains('sec-pillar')) {
+          S.currentPillarSec = e.target;
+          S.currentBulletRevealed = 0;
+        } else {
+          S.currentPillarSec = null;
+        }
+      }
+    });
+  }, { threshold: 0.5, root: screen });
+
+  screen.querySelectorAll('.sec-pillar, .sec-exit').forEach(s => observer.observe(s));
+
+  /* Click anywhere on planet screen reveals next bullet */
+  screen.addEventListener('click', e => {
+    if (e.target.closest('button')) return;
+    revealNextBullet();
+  });
+
+  /* Scroll parallax — atmosfera si sposta mentre si cammina tra i pilastri */
+  screen.addEventListener('scroll', () => {
+    const max = screen.scrollHeight - screen.clientHeight;
+    const pct = max > 0 ? screen.scrollTop / max : 0;
+    const atmo = document.getElementById('planet-atmo');
+    if (atmo) atmo.style.backgroundPositionY = `${50 + pct * 14}%`;
+  }, { passive: true });
+}
+
+/* Back navigation */
+function navBack(to) {
+  if (S.busy) return;
+  S.busy = true;
+
+  if (S.screen === 'planet') {
+    document.body.classList.remove('in-planet');
+    document.getElementById('planet-atmo').classList.remove('show');
+    document.getElementById('planet-atmo').className = '';
+  }
+
+  if (to === 'system') {
+    S.screen = 'system'; S.planetId = null;
+    showScreen('screen-system');
+  } else {
+    S.screen = 'universe'; S.sysId = null; S.planetId = null;
+    showScreen('screen-universe');
+  }
+
+  updateBtns();
+  setTimeout(() => { S.busy = false; }, 700);
+}
+
+function enterOffer() {
+  if (S.busy) return;
+  S.screen = 'offer';
+  showScreen('screen-offer');
+  updateBtns();
+}
+
+function revealNextBullet() {
+  if (!S.currentPillarSec) return false;
+  const bullets = S.currentPillarSec.querySelectorAll('.pillar-bullets li');
+  if (S.currentBulletRevealed < bullets.length) {
+    bullets[S.currentBulletRevealed].classList.add('bullet-revealed');
+    S.currentBulletRevealed++;
+    return true;
+  }
+  return false;
+}
+
+/* -------------------------------------------------------
+   COLOR HELPERS
+   ------------------------------------------------------- */
+function lighten(hex) {
+  return `rgb(${Math.min(255,parseInt(hex.slice(1,3),16)+88)},${Math.min(255,parseInt(hex.slice(3,5),16)+88)},${Math.min(255,parseInt(hex.slice(5,7),16)+88)})`;
+}
+function darken(hex) {
+  return `rgb(${Math.max(0,parseInt(hex.slice(1,3),16)-42)},${Math.max(0,parseInt(hex.slice(3,5),16)-42)},${Math.max(0,parseInt(hex.slice(5,7),16)-42)})`;
+}
+
+/* -------------------------------------------------------
+   INIT
+   ------------------------------------------------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  Stars.init();
+  Parallax.init();
+  updateBtns();
+
+  /* Keyboard navigation — Space / Arrow → advance bullets or sections */
+  document.addEventListener('keydown', e => {
+    const advance = e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowRight';
+    const retreat = e.key === 'ArrowUp' || e.key === 'ArrowLeft';
+
+    if (S.screen === 'planet') {
+      if (advance) {
+        e.preventDefault();
+        if (!revealNextBullet()) {
+          /* All bullets shown — snap to next section */
+          const sc = document.getElementById('screen-planet');
+          const sectionH = sc.clientHeight;
+          const curIdx = Math.round(sc.scrollTop / sectionH);
+          const secs = sc.querySelectorAll('.snap-sec');
+          if (curIdx < secs.length - 1) {
+            sc.scrollTo({ top: (curIdx + 1) * sectionH, behavior: 'smooth' });
+          }
+        }
+      }
+      if (retreat) {
+        e.preventDefault();
+        const sc = document.getElementById('screen-planet');
+        const sectionH = sc.clientHeight;
+        const curIdx = Math.round(sc.scrollTop / sectionH);
+        if (curIdx > 0) sc.scrollTo({ top: (curIdx - 1) * sectionH, behavior: 'smooth' });
+      }
+    }
+
+    if (S.screen === 'chapter' && advance) {
+      e.preventDefault();
+      continueToSystem();
+    }
+
+    if (e.key === 'Escape') {
+      if (S.screen === 'planet') navBack('system');
+      else if (S.screen === 'system' || S.screen === 'chapter') navBack('universe');
+      else if (S.screen === 'offer') navBack('universe');
+    }
+  });
+});
+
+</script>
+</body>
+</html>
